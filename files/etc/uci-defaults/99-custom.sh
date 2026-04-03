@@ -43,20 +43,21 @@ echo "Board detected: $board_name" >>$LOGFILE
 
 wan_ifname=""
 lan_ifnames=""
-# 此处特殊处理个别开发板网口顺序问题
+
+# ==================== 修改开始 ====================
+# 强制指定映射关系：LAN=eth0, WAN=eth1
 case "$board_name" in
-    "radxa,e20c"|"friendlyarm,nanopi-r5c")
+    *)
+        # 无论什么型号，优先尝试将 WAN 设为 eth1，LAN 设为 eth0
+        # 这样即便在虚拟机或普通 X86 设备上也能生效
         wan_ifname="eth1"
         lan_ifnames="eth0"
-        echo "Using $board_name mapping: WAN=$wan_ifname LAN=$lan_ifnames" >>"$LOGFILE"
-        ;;
-    *)
-        # 默认第一个接口为WAN，其余为LAN
-        wan_ifname=$(echo "$ifnames" | awk '{print $1}')
-        lan_ifnames=$(echo "$ifnames" | cut -d ' ' -f2-)
-        echo "Using default mapping: WAN=$wan_ifname LAN=$lan_ifnames" >>"$LOGFILE"
+        
+        # 容错处理：如果总共只有一个网口，上面的逻辑会在后面 count -eq 1 处重写
+        echo "Using Custom Mapping: WAN=$wan_ifname LAN=$lan_ifnames" >>"$LOGFILE"
         ;;
 esac
+# ==================== 修改结束 ====================
 
 # 3. 配置网络
 if [ "$count" -eq 1 ]; then
